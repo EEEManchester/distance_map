@@ -22,6 +22,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <memory>
+#include <iostream>
 
 namespace distmap {
 
@@ -91,6 +92,18 @@ public:
 
   void positionToCell(const double x, const double y,
                       std::size_t& row, std::size_t& col) const;
+
+  Gradient gradientAtPositionSafeCustom(const double x, const double y,
+                                        const bool interpolate) const;
+
+  Gradient gradientAtPositionCustom(double x, double y,
+                                    const bool interpolate) const;
+  Gradient gradientAtCellCustom(std::size_t row, std::size_t col) const;
+  
+  double atPositionSafeCustom(const double x, const double y,
+                              const bool interpolate) const;
+  double atPositionCustom(const double x, const double y,
+                          const bool interpolate) const;
 
   /**
    * @brief atCell
@@ -183,6 +196,9 @@ protected:
 
   /// @brief 2D grid data. Col-major.
   double* data_;
+
+  //
+  double dmin_;
 
   std::size_t getIndex(const std::size_t row, const std::size_t col) const;
 

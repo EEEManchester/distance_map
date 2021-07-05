@@ -24,6 +24,7 @@ DistanceMap::DistanceMap(const Dimension& dimension,
   : dimension_(dimension)
   , resolution_(resolution)
   , origin_(origin)
+  , dmin_(0.06)
 {
   if (resolution_ <= 0)
     throw std::runtime_error("Resolution can't be zero nor negative !");
@@ -475,5 +476,207 @@ void DistanceMap::assertIsValidPosition(const double& x, const double& y) const
 }
 
 
+// Custom from WEI
+DistanceMap::Gradient
+DistanceMap::gradientAtPositionSafeCustom(const double x, const double y,
+                                          const bool interpolate) const
+{
+  Gradient grad;
+  if (isPositionValid(x-resolution_-eps,y-resolution_-eps) &&
+      isPositionValid(x+resolution_+eps,y+resolution_+eps)   )
+  {
+    grad = gradientAtPositionCustom(x,y,interpolate);
+  }
+  else
+  {
+    // @todo gradient to in bounds
+    grad.dx = 0;
+    grad.dy = 0;
+  }
 
+  return grad;
 }
+
+DistanceMap::Gradient
+DistanceMap::gradientAtPositionCustom(double x, double y,
+                                      const bool interpolate) const
+{
+  // if (!interpolate)
+  // {
+    /// @todo handle borders
+    Gradient grad;
+
+    const double dhdx = atPositionCustom(x+resolution_+eps, y, interpolate);
+    const double dldx = atPositionCustom(x-resolution_-eps, y, interpolate);
+
+    const double dhdy = atPositionCustom(x, y+resolution_+eps, interpolate);
+    const double dldy = atPositionCustom(x, y-resolution_-eps, interpolate);
+
+    grad.dx = (dhdx - dldx) / 2.;
+    grad.dy = (dhdy - dldy) / 2.;
+
+    return grad;
+  // }
+
+  // bilinear interpolation
+
+  /// @todo we're differentiating on the grid,
+  /// what if theta_grid != theta_origin ?
+  /// grad_pos = R.grad_cell ?
+
+  // std::size_t lxi, lyi;
+  // positionToCell(x,y,lyi,lxi);
+  // std::size_t hxi=lxi+1, hyi=lyi+1;
+
+  // double lx, ly;
+  // cellToPosition(lyi,lxi,lx,ly);
+
+  // double hx, hy;
+  // cellToPosition(hyi,hxi,hx,hy);
+
+  // if ((hx==lx && hy==ly)    ||
+  //     !isCellValid(lyi,lxi) ||
+  //     !isCellValid(lyi,hxi) ||
+  //     !isCellValid(hyi,lxi) ||
+  //     !isCellValid(hyi,hxi)   )
+  // {
+  //   return gradientAtPositionCustom(x,y,false);
+  // }
+
+  // const double w = 1./ (hx-lx)*(hy-ly);
+
+  // const double a=(hx-x)*w;
+  // const double b=(x-lx)*w;
+
+  // const auto q11=gradientAtCellCustom(lyi,lxi);
+  // const auto q12=gradientAtCellCustom(lyi,hxi);
+  // const auto q21=gradientAtCellCustom(hyi,lxi);
+  // const auto q22=gradientAtCellCustom(hyi,hxi);
+
+  // // std::cout << "p: " << x << "\t" << y << std::endl;
+  // // std::cout << "p11: " << lyi << "\t" << lxi << lx << "\t" << ly << std::endl;
+  // // std::cout << "p12: " << lyi << "\t" << hxi << std::endl;
+  // // std::cout << "p21: " << hyi << "\t" << lxi << std::endl;
+  // // std::cout << "p22: " << hyi << "\t" << hxi << hx << "\t" << hy << std::endl;
+
+  // Gradient grad;
+  // {
+  //   const double g=q11.dx*a+q21.dx*b;
+  //   const double h=q12.dx*a+q22.dx*b;
+
+  //   grad.dx = (g*(hy-y)+h*(y-ly));
+  // }
+
+  // {
+  //   const double g=q11.dy*a+q21.dy*b;
+  //   const double h=q12.dy*a+q22.dy*b;
+
+  //   grad.dy = (g*(hy-y)+h*(y-ly));
+  // }
+
+  // return grad*(1./resolution_);
+}
+
+DistanceMap::Gradient
+DistanceMap::gradientAtCellCustom(std::size_t row, std::size_t col) const
+{
+  assertIsValidCell(row, col);
+
+  // handle borders
+  row = std::max(row, std::size_t(1));
+  col = std::max(col, std::size_t(1));
+
+  row = std::min(row, dimension_.height-2);
+  col = std::min(col, dimension_.width -2);
+
+  Gradient grad;
+
+  const double dhdx = 0.;//atCellCustom(row, col+1);
+  const double dldx = 0.;//atCellCustom(row, col-1);
+
+  const double dhdy = 0.;//atCellCustom(row+1, col);
+  const double dldy = 0.;//atCellCustom(row-1, col);
+
+  grad.dx = (dhdx - dldx) / 2.;
+  grad.dy = (dldy - dhdy) / 2.;
+
+  return grad;
+}
+
+double DistanceMap::atPositionCustom(const double x, const double y,
+                                     const bool interpolate) const
+{
+  assertIsValidPosition(x,y);
+
+  if (!interpolate)
+  {
+    std::size_t row, col;
+    positionToCell(x,y,row,col);
+
+    return atCell(row,col) * resolution_;
+  }
+
+  // bilinear interpolation
+
+  /// @todo we're interpolating on the grid,
+  /// what if theta_grid != theta_origin ?
+
+  std::size_t lxi, lyi;
+  positionToCell(x,y,lyi,lxi);
+  std::size_t hxi=lxi+1, hyi=lyi+1;
+
+  double lx, ly;
+  cellToPosition(lyi,lxi,lx,ly);
+
+  double hx, hy;
+  cellToPosition(hyi,hxi,hx,hy);
+
+  if ((hx==lx && hy==ly)    ||
+      !isCellValid(lyi,lxi) ||
+      !isCellValid(lyi,hxi) ||
+      !isCellValid(hyi,lxi) ||
+      !isCellValid(hyi,hxi)   )
+  {
+    std::size_t row, col;
+    positionToCell(x,y,row,col);
+
+    return atCell(row,col) * resolution_;
+  }
+
+  const double w = 1./ (hx-lx)*(hy-ly);
+
+  const double a=(hx-x)*w;
+  const double b=(x-lx)*w;
+
+  const double q11=atCell(lyi,lxi);
+  const double q12=atCell(lyi,hxi);
+  const double q21=atCell(hyi,lxi);
+  const double q22=atCell(hyi,hxi);
+
+  const double g=q11*a+q21*b;
+  const double h=q12*a+q22*b;
+
+  const double sdf = (g*(hy-y)+h*(y-ly))/resolution_;
+
+  double val = 0;
+  if (sdf <= 0)
+    val = 0.5*dmin_ - sdf;
+  else if (sdf <= dmin_ && sdf >= 0)
+    val = 1/(2*dmin_)*pow((sdf-dmin_),2);
+  // std::cout << sdf << "\t" << val << "\t" << dori << "\t" << resolution_ << std::endl;
+  return val;
+}
+
+double DistanceMap::atPositionSafeCustom(const double x, const double y,
+                                         const bool interpolate) const
+{
+  /// @todo return -dist_to_in_bound ?
+  double d = 0;
+  if (isPositionValid(x,y))
+  {
+    d = atPositionCustom(x,y,interpolate);
+  }
+  return d;
+}
+
+} // END namespace

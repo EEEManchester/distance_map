@@ -145,6 +145,12 @@ void DistanceMapImarker::initialize()
       const auto g = dist_grid_ptr_->gradientAtPositionSafe(
             feedback->pose.position.x, feedback->pose.position.y, true);
 
+      const double dc = dist_grid_ptr_->atPositionSafeCustom(
+            feedback->pose.position.x, feedback->pose.position.y, true);
+
+      const auto gc = dist_grid_ptr_->gradientAtPositionSafeCustom(
+            feedback->pose.position.x, feedback->pose.position.y, true);
+
       if (distance_map_markers_.markers.empty())
       {
         gradient_marker_.action = visualization_msgs::Marker::ADD;
@@ -173,10 +179,13 @@ void DistanceMapImarker::initialize()
 
       const double gnorm = std::sqrt(g.dx*g.dx + g.dy*g.dy);
 
-      ROS_INFO_STREAM("At position [" << feedback->pose.position.x << ","
-                      << feedback->pose.position.y << "] distance is " << d
-                      << " gradient is [" << g.dx << "," << g.dy << "]"
-                      << "(norm " << gnorm << ")");
+      // ROS_INFO_STREAM("At position [" << feedback->pose.position.x << ","
+      //                 << feedback->pose.position.y << "] distance is " << d
+      //                 << " gradient is [" << g.dx << "," << g.dy << "]"
+      //                 << "(norm " << gnorm << ")");
+      printf("At position [%.2f %.2f]: \n  Distance: %.3f \t Gradient (%.3f , %.3f) \n", feedback->pose.position.x, feedback->pose.position.y, d, g.dx, g.dy);
+      printf("  Distance: %.3f \t Gradient (%.3f , %.3f) \n", dc, gc.dx, gc.dy);
+      // printf("  Distance: %.3f  \n", dc);
     }
   };
 
