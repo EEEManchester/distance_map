@@ -184,7 +184,7 @@ void DistanceMapImarker::initialize()
       //                 << " gradient is [" << g.dx << "," << g.dy << "]"
       //                 << "(norm " << gnorm << ")");
       printf("At position [%.2f %.2f]: \n  Distance: %.3f \t Gradient (%.3f , %.3f) \n", feedback->pose.position.x, feedback->pose.position.y, d, g.dx, g.dy);
-      printf("  Distance: %.3f \t Gradient (%.3f , %.3f) \n", dc, gc.dx, gc.dy);
+      printf("  Obstacle: %.3f \t Gradient (%.3f , %.3f) \n", dc, gc.dx, gc.dy);
       // printf("  Distance: %.3f  \n", dc);
     }
   };
