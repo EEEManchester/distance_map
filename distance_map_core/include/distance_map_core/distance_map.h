@@ -186,6 +186,10 @@ public:
   const double&    getResolution() const noexcept;
   const Origin&    getOrigin()     const noexcept;
 
+  /// @brief sets desired distance to obstacle
+  void setDesiredObstacleDistance(double d);
+  double getDesiredObstacleDistance();
+
 protected:
 
   bool initialized_ = false;
@@ -197,7 +201,7 @@ protected:
   /// @brief 2D grid data. Col-major.
   double* data_;
 
-  //
+  /// @brief minimum desired distance to obstacle
   double dmin_;
 
   std::size_t getIndex(const std::size_t row, const std::size_t col) const;

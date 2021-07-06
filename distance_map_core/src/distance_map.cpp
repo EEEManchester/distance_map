@@ -603,6 +603,14 @@ DistanceMap::gradientAtCellCustom(std::size_t row, std::size_t col) const
   return grad;
 }
 
+void DistanceMap::setDesiredObstacleDistance(double d)
+{
+  dmin_ = d;
+  printf("dmin set to %.3f\n",dmin_);
+}
+
+double DistanceMap::getDesiredObstacleDistance(){ return dmin_; }
+
 double DistanceMap::atPositionCustom(const double x, const double y,
                                      const bool interpolate) const
 {
